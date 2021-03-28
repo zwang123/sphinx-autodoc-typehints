@@ -1,9 +1,9 @@
+import sys
 import typing
 from dataclasses import dataclass
 from mailbox import Mailbox
 from typing import Union
 
-import sys
 if sys.version_info.major == 3 and sys.version_info.minor >= 9:
     from collections.abc import Callable
 else:
