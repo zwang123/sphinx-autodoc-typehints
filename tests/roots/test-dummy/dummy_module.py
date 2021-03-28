@@ -1,4 +1,5 @@
 import typing
+from dataclasses import dataclass
 from mailbox import Mailbox
 from typing import Union
 
@@ -7,12 +8,6 @@ if sys.version_info.major == 3 and sys.version_info.minor >= 9:
     from collections.abc import Callable
 else:
     from typing import Callable
-
-try:
-    from dataclasses import dataclass
-except ImportError:
-    def dataclass(cls):
-        return cls
 
 
 def get_local_function():
@@ -191,6 +186,16 @@ class ClassWithTypehints(object):
         """
         return 42
 
+    def method_without_typehint(self, x):
+        """
+        Method docstring.
+        """
+        # test that multiline str can be correctly indented
+        multiline_str = """
+test
+"""
+        return multiline_str
+
 
 def function_with_typehint_comment_not_inline(x=None, *y, z, **kwargs):
     # type: (Union[str, bytes], *str, bytes, **int) -> None
@@ -261,6 +266,13 @@ def undocumented_function(x: int) -> str:
     """Hi"""
 
     return str(x)
+
+
+@dataclass
+class DataClass:
+    """Class docstring."""
+
+    x: int
 
 
 class Decorator:

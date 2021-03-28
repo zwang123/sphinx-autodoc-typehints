@@ -2,7 +2,7 @@ import inspect
 import sys
 import textwrap
 import typing
-from typing import get_type_hints, TypeVar, Any, AnyStr, Tuple
+from typing import Any, AnyStr, Tuple, TypeVar, get_type_hints
 
 from sphinx.util import logging
 from sphinx.util.inspect import signature as Signature
@@ -72,17 +72,6 @@ def get_annotation_args(annotation, module: str, class_name: str) -> Tuple:
     # Special cases
     if class_name in ('Pattern', 'Match') and hasattr(annotation, 'type_var'):  # Python < 3.7
         return annotation.type_var,
-    elif class_name == 'Callable' and hasattr(annotation, '__result__'):  # Python < 3.5.3
-        argtypes = (Ellipsis,) if annotation.__args__ is Ellipsis else annotation.__args__
-        return argtypes + (annotation.__result__,)
-    elif class_name == 'Union' and hasattr(annotation, '__union_params__'):  # Union on Python 3.5
-        return annotation.__union_params__
-    elif class_name == 'Tuple' and hasattr(annotation, '__tuple_params__'):  # Tuple on Python 3.5
-        params = annotation.__tuple_params__
-        if getattr(annotation, '__tuple_use_ellipsis__', False):
-            params += (Ellipsis,)
-
-        return params
     elif class_name == 'ClassVar' and hasattr(annotation, '__type__'):  # ClassVar on Python < 3.7
         return annotation.__type__,
     elif class_name == 'NewType' and hasattr(annotation, '__supertype__'):
@@ -116,7 +105,7 @@ def format_annotation(annotation,
         class_name = get_annotation_class_name(annotation, module)
         args = get_annotation_args(annotation, module, class_name)
     except ValueError:
-        return str(annotation)
+        return str(annotation).strip("'")
 
     # Redirect all typing_extensions types to the stdlib typing module
     if module == 'typing_extensions':
@@ -165,6 +154,45 @@ def format_annotation(annotation,
 
     return ':py:{role}:`{prefix}{full_name}`{formatted_args}'.format(
         role=role, prefix=prefix, full_name=full_name, formatted_args=formatted_args)
+
+
+# reference: https://github.com/pytorch/pytorch/pull/46548/files
+def normalize_source_lines(sourcelines: str) -> str:
+    """
+    This helper function accepts a list of source lines. It finds the
+    indentation level of the function definition (`def`), then it indents
+    all lines in the function body to a point at or greater than that
+    level. This allows for comments and continued string literals that
+    are at a lower indentation than the rest of the code.
+    Arguments:
+        sourcelines: source code
+    Returns:
+        source lines that have been correctly aligned
+    """
+    sourcelines = sourcelines.split("\n")
+
+    def remove_prefix(text, prefix):
+        return text[text.startswith(prefix) and len(prefix):]
+
+    # Find the line and line number containing the function definition
+    for i, l in enumerate(sourcelines):
+        if l.lstrip().startswith("def"):
+            idx = i
+            break
+    else:
+        return "\n".join(sourcelines)
+    fn_def = sourcelines[idx]
+
+    # Get a string representing the amount of leading whitespace
+    whitespace = fn_def.split("def")[0]
+
+    # Add this leading whitespace to all lines before and after the `def`
+    aligned_prefix = [whitespace + remove_prefix(s, whitespace) for s in sourcelines[:idx]]
+    aligned_suffix = [whitespace + remove_prefix(s, whitespace) for s in sourcelines[idx + 1:]]
+
+    # Put it together again
+    aligned_prefix.append(fn_def)
+    return "\n".join(aligned_prefix + aligned_suffix)
 
 
 def process_signature(app, what: str, name: str, obj, options, signature, return_annotation):
@@ -289,7 +317,8 @@ def backfill_type_hints(obj, name):
         return children[0]
 
     try:
-        obj_ast = ast.parse(textwrap.dedent(inspect.getsource(obj)), **parse_kwargs)
+        obj_ast = ast.parse(textwrap.dedent(
+            normalize_source_lines(inspect.getsource(obj))), **parse_kwargs)
     except (OSError, TypeError):
         return {}
 
@@ -433,7 +462,7 @@ def process_docstring(app, what, name, obj, options, lines):
             formatted_annotation = format_annotation(
                 type_hints['return'], fully_qualified=app.config.typehints_fully_qualified,
                 simplify_optional_unions=app.config.simplify_optional_unions
-                )
+            )
 
             insert_index = len(lines)
             for i, line in enumerate(lines):
