@@ -500,7 +500,9 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
            Docstring with collections.abc.Callable.
 
            Parameters:
-              **func** ("Callable"[["str"], "str"]) -- foo
+              * **func** ("Callable"[["str"], "str"]) -- foo
+
+              * **x** ("str") -- bar
 
            Return type:
               "str"
@@ -510,8 +512,7 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
            Docstring with collections.abc.Callable and ellipsis in arg list.
 
            Parameters:
-              * **func** ("Callable"[..., "str"]) -- foo
-              * **x** ("str") -- bar
+              **func** ("Callable"[..., "str"]) -- foo
 
            Return type:
               "str"
