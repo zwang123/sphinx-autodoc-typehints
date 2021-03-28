@@ -4,20 +4,15 @@ import sys
 import textwrap
 import typing
 from typing import (
-    Any, AnyStr, Callable, Dict, Generic, Mapping, NewType, Optional, Pattern, Match, Tuple,
-    TypeVar, Union, Type)
+    IO, Any, AnyStr, Callable, Dict, Generic, Mapping, Match, NewType, Optional, Pattern, Tuple,
+    Type, TypeVar, Union)
 
 import pytest
 import typing_extensions
 
 from sphinx_autodoc_typehints import (
-    format_annotation, process_docstring, get_annotation_module, get_annotation_class_name,
-    get_annotation_args)
-
-try:
-    from typing import IO
-except ImportError:
-    from typing.io import IO
+    format_annotation, get_annotation_args, get_annotation_class_name, get_annotation_module,
+    process_docstring)
 
 T = TypeVar('T')
 U = TypeVar('U', covariant=True)
@@ -127,14 +122,14 @@ def test_parse_annotation(annotation, module, class_name, args):
     (Union[str, bool],              ':py:data:`~typing.Union`\\[:py:class:`str`, '
                                     ':py:class:`bool`]'),
     (Union[str, bool, None],        ':py:data:`~typing.Union`\\[:py:class:`str`, '
-                                    ':py:class:`bool`, ``None``]'),
+                                    ':py:class:`bool`, :py:obj:`None`]'),
     pytest.param(Union[str, Any],   ':py:data:`~typing.Union`\\[:py:class:`str`, '
                                     ':py:data:`~typing.Any`]',
                  marks=pytest.mark.skipif((3, 5, 0) <= sys.version_info[:3] <= (3, 5, 2),
                                           reason='Union erases the str on 3.5.0 -> 3.5.2')),
     (Optional[str],                 ':py:data:`~typing.Optional`\\[:py:class:`str`]'),
     (Optional[Union[str, bool]],    ':py:data:`~typing.Union`\\[:py:class:`str`, '
-                                    ':py:class:`bool`, ``None``]'),
+                                    ':py:class:`bool`, :py:obj:`None`]'),
     (Callable,                      ':py:data:`~typing.Callable`'),
     (Callable[..., int],            ':py:data:`~typing.Callable`\\[..., :py:class:`int`]'),
     (Callable[[int], int],          ':py:data:`~typing.Callable`\\[\\[:py:class:`int`], '
@@ -248,10 +243,14 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
     assert 'Cannot resolve forward reference in type annotations of ' in warnings, warnings
 
     format_args = {}
-    if always_document_param_types:
-        format_args['undoc_params'] = '\n\n   Parameters:\n      **x** ("int") --'
-    else:
-        format_args['undoc_params'] = ''
+    for indentation_level in range(2):
+        key = f'undoc_params_{indentation_level}'
+        if always_document_param_types:
+            format_args[key] = textwrap.indent(
+                '\n\n   Parameters:\n      **x** ("int") --', '   ' * indentation_level
+            )
+        else:
+            format_args[key] = ''
 
     text_path = pathlib.Path(app.srcdir) / '_build' / 'text' / 'index.txt'
     with text_path.open('r') as f:
@@ -448,6 +447,10 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
               Return type:
                  "int"
 
+           method_without_typehint(x)
+
+              Method docstring.
+
         dummy_module.function_with_typehint_comment_not_inline(x=None, *y, z, **kwargs)
 
            Function docstring.
@@ -523,10 +526,18 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
 
         dummy_module.undocumented_function(x)
 
-           Hi{undoc_params}
+           Hi{undoc_params_0}
 
            Return type:
               "str"
+
+        class dummy_module.DataClass(x)
+
+           Class docstring.{undoc_params_0}
+
+           __init__(x)
+
+              Initialize self.  See help(type(self)) for accurate signature.{undoc_params_1}
 
         @dummy_module.Decorator(func)
 
