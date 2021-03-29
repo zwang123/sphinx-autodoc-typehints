@@ -16,6 +16,7 @@ from sphinx.util import logging
 # from sphinx.util.inspect import isstaticmethod
 from sphinx.util.inspect import signature as Signature
 from sphinx.util.inspect import stringify_signature, unwrap_all
+from sphinx.ext.autodoc.importer import mangle
 
 logger = logging.getLogger(__name__)
 pydata_annotations = {'Any', 'AnyStr', 'Callable', 'ClassVar', 'Literal',
@@ -481,8 +482,8 @@ def isstaticmethod(obj):
     # https://stackoverflow.com/questions/8727059/
     # python-check-if-method-is-static
     # Modified from Azmisov's Answer
-    return isinstance(inspect.getattr_static(cls, obj.__name__, None),
-                      staticmethod)
+    return isinstance(inspect.getattr_static(
+        cls, mangle(cls, obj.__name__), None), staticmethod)
 
 
 def process_docstring(app, what, name, obj, options, lines):
@@ -497,13 +498,8 @@ def process_docstring(app, what, name, obj, options, lines):
         obj = inspect.unwrap(obj)
         type_hints = get_all_type_hints(obj, name)
 
-        logger.warning(what)
-        logger.warning(f'{obj}')
         rm_first_arg = what in ['method', 'property',
                                 'class'] and not isstaticmethod(obj)
-        # rm_first_arg = inspect.isclass(original_obj) or \
-        #     inspect.ismethod(original_obj)
-        logger.warning(f'{rm_first_arg}')
         first_argname = next(iter(Signature(unwrap_all(
             obj)).parameters)) if rm_first_arg else None
         if first_argname and first_argname.endswith('_'):
@@ -527,7 +523,6 @@ def process_docstring(app, what, name, obj, options, lines):
             if insert_index is None and app.config.\
                 always_document_param_types and (
                     not rm_first_arg or argname != first_argname):
-                logger.warning(f'{obj} {argname} {first_argname}')
                 insert_index = find_next_arg(lines, get_args(obj), argname)
                 lines.insert(insert_index, ':param {}:'.format(argname))
                 # Insert type before param, so insert_index is not incremented

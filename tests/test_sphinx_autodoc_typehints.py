@@ -574,6 +574,10 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
 
            ClassWithTypeHintedSelf initializer docstring.
 
+           __static_method(self, other)
+
+              Staticmethod docstring.{undoc_param_self_1}
+
            classmethod class_method()
 
               Classmethod docstring.

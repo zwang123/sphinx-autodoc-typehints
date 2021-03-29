@@ -318,6 +318,13 @@ class ClassWithTypeHintedSelf:
     def __init__(self_: T):
         pass
 
+    @staticmethod
+    def __static_method(self: int, other):
+        """
+        Staticmethod docstring.
+        """
+        pass
+
     @classmethod
     def class_method(cls_: type):
         """

@@ -41,6 +41,7 @@ Dummy Module
 
 .. autoclass:: dummy_module.ClassWithTypeHintedSelf
    :members:
+   :private-members:
 
 .. autoclass:: dummy_module.DataClass
     :undoc-members:
