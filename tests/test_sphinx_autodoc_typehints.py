@@ -244,13 +244,15 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
 
     format_args = {}
     for indentation_level in range(2):
-        key = f'undoc_params_{indentation_level}'
-        if always_document_param_types:
-            format_args[key] = textwrap.indent(
-                '\n\n   Parameters:\n      **x** ("int") --', '   ' * indentation_level
-            )
-        else:
-            format_args[key] = ''
+        for var in ['x', 'self']:
+            key = f'undoc_param_{var}_{indentation_level}'
+            if always_document_param_types:
+                format_args[key] = textwrap.indent(
+                    f'\n\n   Parameters:\n      **{var}** ("int") --',
+                    '   ' * indentation_level
+                )
+            else:
+                format_args[key] = ''
     format_args['partial_undoc_params'] = f'\n\n{" " * 6}' + \
         '* **undoc** ("str") --' if always_document_param_types else ''
 
@@ -563,18 +565,38 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
 
         dummy_module.undocumented_function(x)
 
-           Hi{undoc_params_0}
+           Hi{undoc_param_x_0}
 
            Return type:
               "str"
 
+        class dummy_module.ClassWithTypeHintedSelf
+
+           ClassWithTypeHintedSelf initializer docstring.
+
+           classmethod class_method()
+
+              Classmethod docstring.
+
+           method()
+
+              Method docstring.
+
+           property property
+
+              Property docstring.
+
+           static static_method(self, other)
+
+              Staticmethod docstring.{undoc_param_self_1}
+
         class dummy_module.DataClass(x)
 
-           Class docstring.{undoc_params_0}
+           Class docstring.{undoc_param_x_0}
 
            __init__(x)
 
-              Initialize self.  See help(type(self)) for accurate signature.{undoc_params_1}
+              Initialize self.  See help(type(self)) for accurate signature.{undoc_param_x_1}
 
         @dummy_module.Decorator(func)
 

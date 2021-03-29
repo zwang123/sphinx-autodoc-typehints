@@ -2,12 +2,15 @@ import sys
 import typing
 from dataclasses import dataclass
 from mailbox import Mailbox
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, TypeVar
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 9:
     from collections.abc import Callable as ABCCallable
 else:
     from typing import Callable as ABCCallable
+
+
+T = TypeVar('T')
 
 
 def get_local_function():
@@ -305,6 +308,42 @@ def undocumented_function(x: int) -> str:
     """Hi"""
 
     return str(x)
+
+
+class ClassWithTypeHintedSelf:
+    """
+    ClassWithTypeHintedSelf initializer docstring.
+    """
+
+    def __init__(self_: T):
+        pass
+
+    @classmethod
+    def class_method(cls_: type):
+        """
+        Classmethod docstring.
+        """
+        pass
+
+    def method(self_: T):
+        """
+        Method docstring.
+        """
+        pass
+
+    @property
+    def property(self_: T):
+        """
+        Property docstring.
+        """
+        pass
+
+    @staticmethod
+    def static_method(self: int, other):
+        """
+        Staticmethod docstring.
+        """
+        pass
 
 
 @dataclass

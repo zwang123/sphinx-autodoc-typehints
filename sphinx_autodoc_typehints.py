@@ -12,8 +12,10 @@ else:
     from typing import Callable, Iterable, Sequence, Collection, List
 
 from sphinx.util import logging
+# from sphinx.util.inspect import isclassmethod, isstaticmethod
+# from sphinx.util.inspect import isstaticmethod
 from sphinx.util.inspect import signature as Signature
-from sphinx.util.inspect import stringify_signature
+from sphinx.util.inspect import stringify_signature, unwrap_all
 
 logger = logging.getLogger(__name__)
 pydata_annotations = {'Any', 'AnyStr', 'Callable', 'ClassVar', 'Literal',
@@ -197,7 +199,7 @@ def normalize_source_lines(sourcelines: str) -> str:
 
 
 def get_args(func: Callable, for_sphinx: bool = True) -> List[str]:
-    signature = Signature(func)
+    signature = Signature(unwrap_all(func))
     return ['{}\\_'.format(k[:-1]) if for_sphinx and k.endswith('_')
             else k for k in signature.parameters]
 
@@ -464,6 +466,25 @@ def split_type_comment_args(comment):
     return result
 
 
+def isstaticmethod(obj):
+    # https://stackoverflow.com/questions/3589311/
+    # get-defining-class-of-unbound-method-object-in-python-3/
+    # Modified from Yoel's Answer
+    obj = unwrap_all(obj)
+    if not inspect.isfunction(obj):
+        return False
+    cls = getattr(inspect.getmodule(obj),
+                  obj.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0],
+                  None)
+    cls = cls if isinstance(cls, type) else getattr(obj, '__objclass__', None)
+
+    # https://stackoverflow.com/questions/8727059/
+    # python-check-if-method-is-static
+    # Modified from Azmisov's Answer
+    return isinstance(inspect.getattr_static(cls, obj.__name__, None),
+                      staticmethod)
+
+
 def process_docstring(app, what, name, obj, options, lines):
     original_obj = obj
     if isinstance(obj, property):
@@ -475,6 +496,18 @@ def process_docstring(app, what, name, obj, options, lines):
 
         obj = inspect.unwrap(obj)
         type_hints = get_all_type_hints(obj, name)
+
+        logger.warning(what)
+        logger.warning(f'{obj}')
+        rm_first_arg = what in ['method', 'property',
+                                'class'] and not isstaticmethod(obj)
+        # rm_first_arg = inspect.isclass(original_obj) or \
+        #     inspect.ismethod(original_obj)
+        logger.warning(f'{rm_first_arg}')
+        first_argname = next(iter(Signature(unwrap_all(
+            obj)).parameters)) if rm_first_arg else None
+        if first_argname and first_argname.endswith('_'):
+            first_argname = '{}\\_'.format(first_argname[:-1])
 
         for argname, annotation in type_hints.items():
             if argname == 'return':
@@ -491,7 +524,10 @@ def process_docstring(app, what, name, obj, options, lines):
                          for field in ('param', 'parameter', 'arg', 'argument')]
             insert_index = search_field(lines, searchfor)
 
-            if insert_index is None and app.config.always_document_param_types:
+            if insert_index is None and app.config.\
+                always_document_param_types and (
+                    not rm_first_arg or argname != first_argname):
+                logger.warning(f'{obj} {argname} {first_argname}')
                 insert_index = find_next_arg(lines, get_args(obj), argname)
                 lines.insert(insert_index, ':param {}:'.format(argname))
                 # Insert type before param, so insert_index is not incremented

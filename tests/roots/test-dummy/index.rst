@@ -39,6 +39,9 @@ Dummy Module
 
 .. autofunction:: dummy_module.undocumented_function
 
+.. autoclass:: dummy_module.ClassWithTypeHintedSelf
+   :members:
+
 .. autoclass:: dummy_module.DataClass
     :undoc-members:
     :special-members: __init__
