@@ -496,9 +496,6 @@ def process_docstring(app, what, name, obj, options, lines):
                 lines.insert(insert_index, ':param {}:'.format(argname))
                 # Insert type before param, so insert_index is not incremented
 
-                # lines.append(':param {}:'.format(argname))
-                # insert_index = len(lines)
-
             if insert_index is not None:
                 lines.insert(
                     insert_index,

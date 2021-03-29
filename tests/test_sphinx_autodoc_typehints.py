@@ -251,12 +251,8 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
             )
         else:
             format_args[key] = ''
-    format_args['partial_undoc_params_header'] = '* ' \
-        if always_document_param_types else ''
-    format_args['partial_undoc_params_footer'] = f'\n{" " * 6}* **y**' + \
-        ' ("str") --\n' if always_document_param_types else ''
-    format_args['partial_undoc_params'] = '* **undoc** ("str") --' + \
-        f'\n\n{" " * 6}' if always_document_param_types else ''
+    format_args['partial_undoc_params'] = f'\n\n{" " * 6}' + \
+        '* **undoc** ("str") --' if always_document_param_types else ''
 
     text_path = pathlib.Path(app.srcdir) / '_build' / 'text' / 'index.txt'
     with text_path.open('r') as f:
@@ -535,31 +531,33 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
            Return type:
               "str"
 
-        dummy_module.function_with_undoc_first_param(undoc, x, y)
+        dummy_module.function_with_undoc_sec_param(x, undoc, y)
 
-           Docstring with undoc first param.
+           Docstring with undocumented second parameter.
 
            Returns:
               something
 
            Parameters:
-              {partial_undoc_params}* **x** ("str") -- foo
+              * **x** ("str") -- foo{partial_undoc_params}
 
               * **y** ("str") -- bar
 
            Return type:
               str
 
-        dummy_module.function_with_partial_undoc_param(x, y)
+        dummy_module.function_with_undoc_last_param(x, y, undoc)
 
-           Docstring with partial undoc params.
+           Docstring with undocumented last parameter.
 
            Returns:
               something
 
            Parameters:
-              {partial_undoc_params_header}**x** ("str") -- foo
-        {partial_undoc_params_footer}
+              * **x** ("str") -- foo
+
+              * **y** ("str") -- bar{partial_undoc_params}
+
            Return type:
               str
 

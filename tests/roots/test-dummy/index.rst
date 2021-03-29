@@ -33,9 +33,9 @@ Dummy Module
 
 .. autofunction:: dummy_module.function_with_typing_Callable_Any
 
-.. autofunction:: dummy_module.function_with_undoc_first_param
+.. autofunction:: dummy_module.function_with_undoc_sec_param
 
-.. autofunction:: dummy_module.function_with_partial_undoc_param
+.. autofunction:: dummy_module.function_with_undoc_last_param
 
 .. autofunction:: dummy_module.undocumented_function
 
