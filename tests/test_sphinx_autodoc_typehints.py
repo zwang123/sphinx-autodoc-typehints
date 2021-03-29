@@ -18,6 +18,7 @@ T = TypeVar('T')
 U = TypeVar('U', covariant=True)
 V = TypeVar('V', contravariant=True)
 W = NewType('W', str)
+TypeVarOfIntStrWithBackslash = TypeVar('TypeVarOfIntStrWith\\', int, str)
 
 
 class A:
@@ -151,7 +152,11 @@ def test_parse_annotation(annotation, module, class_name, args):
     (D,                             ':py:class:`~%s.D`' % __name__),
     (E,                             ':py:class:`~%s.E`' % __name__),
     (E[int],                        ':py:class:`~%s.E`\\[:py:class:`int`]' % __name__),
-    (W,                             ':py:func:`~typing.NewType`\\(:py:data:`~W`, :py:class:`str`)')
+    (W,                             ':py:func:`~typing.NewType`\\('
+                                    ':py:data:`~W`, :py:class:`str`)'),
+    (TypeVarOfIntStrWithBackslash,  ':py:class:`~typing.TypeVar`\\('
+                                    ':py:obj:`TypeVarOfIntStrWith\\\\`, '
+                                    ':py:class:`int`, :py:class:`str`)'),
 ])
 def test_format_annotation(inv, annotation, expected_result):
     result = format_annotation(annotation)
@@ -569,13 +574,6 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
 
            Return type:
               "str"
-
-        dummy_module.function_with_typevar(x)
-
-           Function with TypeVar.
-
-           Parameters:
-              **x** ("TypeVar"("TypeVarOfIntStrWith\\", "int", "str")) -- foo
 
         class dummy_module.ClassWithTypeHintedSelf
 

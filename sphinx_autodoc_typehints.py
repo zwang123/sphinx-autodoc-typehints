@@ -117,7 +117,7 @@ def format_annotation(annotation,
                 constraints = ''.join(', ' + format_annotation(
                     cls, fully_qualified, simplify_optional_unions)
                     for cls in annotation.__constraints__)
-                return r':py:class:`{}typing.TypeVar`\({}{}\)'.format(
+                return r':py:class:`{}typing.TypeVar`\({}{})'.format(
                     '' if fully_qualified else '~', typevar_name, constraints)
             else:
                 return '\\' + repr(annotation)

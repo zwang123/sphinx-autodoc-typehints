@@ -2,16 +2,12 @@ import sys
 import typing
 from dataclasses import dataclass
 from mailbox import Mailbox
-from typing import Any, Callable, Union, TypeVar
+from typing import Any, Callable, Union
 
 if sys.version_info.major == 3 and sys.version_info.minor >= 9:
     from collections.abc import Callable as ABCCallable
 else:
     from typing import Callable as ABCCallable
-
-
-T = TypeVar('T')
-TypeVarOfIntStrWithBackslash = TypeVar('TypeVarOfIntStrWith\\', int, str)
 
 
 def get_local_function():
@@ -311,21 +307,12 @@ def undocumented_function(x: int) -> str:
     return str(x)
 
 
-def function_with_typevar(x: TypeVarOfIntStrWithBackslash):
-    """
-    Function with TypeVar.
-
-    :param x: foo
-    """
-    pass
-
-
 class ClassWithTypeHintedSelf:
     """
     ClassWithTypeHintedSelf initializer docstring.
     """
 
-    def __init__(self_: T):
+    def __init__(self_: Any):
         pass
 
     @staticmethod
@@ -342,14 +329,14 @@ class ClassWithTypeHintedSelf:
         """
         pass
 
-    def method(self_: T):
+    def method(self_: Any):
         """
         Method docstring.
         """
         pass
 
     @property
-    def property(self_: T):
+    def property(self_: Any):
         """
         Property docstring.
         """
