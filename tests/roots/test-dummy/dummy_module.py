@@ -11,6 +11,7 @@ else:
 
 
 T = TypeVar('T')
+TypeVarOfIntStrWithBackslash = TypeVar('TypeVarOfIntStrWith\\', int, str)
 
 
 def get_local_function():
@@ -308,6 +309,15 @@ def undocumented_function(x: int) -> str:
     """Hi"""
 
     return str(x)
+
+
+def function_with_typevar(x: TypeVarOfIntStrWithBackslash):
+    """
+    Function with TypeVar.
+
+    :param x: foo
+    """
+    pass
 
 
 class ClassWithTypeHintedSelf:

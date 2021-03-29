@@ -105,8 +105,22 @@ def format_annotation(annotation,
 
     # Type variables are also handled specially
     try:
+        # Currently hardcoded
+        show_typevar_name_in_block = True
         if isinstance(annotation, TypeVar) and annotation is not AnyStr:
-            return '\\' + repr(annotation)
+            if annotation.__constraints__:
+                name = repr(annotation.__name__)[1:-1]
+                # typevar_name = '``{}``'.format(repr(annotation.__name__)) \
+                #     if show_typevar_name_in_block else name
+                typevar_name = ':py:obj:`{}`'.format(name) \
+                    if show_typevar_name_in_block else name
+                constraints = ''.join(', ' + format_annotation(
+                    cls, fully_qualified, simplify_optional_unions)
+                    for cls in annotation.__constraints__)
+                return r':py:class:`{}typing.TypeVar`\({}{}\)'.format(
+                    '' if fully_qualified else '~', typevar_name, constraints)
+            else:
+                return '\\' + repr(annotation)
     except TypeError:
         pass
 

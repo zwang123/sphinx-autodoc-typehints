@@ -39,6 +39,8 @@ Dummy Module
 
 .. autofunction:: dummy_module.undocumented_function
 
+.. autofunction:: dummy_module.function_with_typevar
+
 .. autoclass:: dummy_module.ClassWithTypeHintedSelf
    :members:
    :private-members:

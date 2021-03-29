@@ -570,6 +570,13 @@ def test_sphinx_output(app, status, warning, always_document_param_types):
            Return type:
               "str"
 
+        dummy_module.function_with_typevar(x)
+
+           Function with TypeVar.
+
+           Parameters:
+              **x** ("TypeVar"("TypeVarOfIntStrWith\\", "int", "str")) -- foo
+
         class dummy_module.ClassWithTypeHintedSelf
 
            ClassWithTypeHintedSelf initializer docstring.
