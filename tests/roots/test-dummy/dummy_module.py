@@ -275,6 +275,31 @@ def function_with_typing_Callable_Any(func: Callable[[Any], str],
     return func(x)
 
 
+def function_with_undoc_first_param(undoc: str, x: str, y: str) -> str:
+    """
+    Docstring with undoc first param.
+
+    :return: something
+    :param x: foo
+    :param y: bar
+    :rtype: str
+    """
+
+    return undoc + x + y
+
+
+def function_with_partial_undoc_param(x: str, y: str) -> str:
+    """
+    Docstring with partial undoc params.
+
+    :return: something
+    :param x: foo
+    :rtype: str
+    """
+
+    return x + y
+
+
 def undocumented_function(x: int) -> str:
     """Hi"""
 

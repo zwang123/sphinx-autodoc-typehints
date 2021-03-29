@@ -1,16 +1,23 @@
 import inspect
+import re
 import sys
 import textwrap
 import typing
-from typing import Any, AnyStr, Tuple, TypeVar, get_type_hints
+from typing import Any, AnyStr, Optional, Tuple, TypeVar, Union, get_type_hints
+
+if sys.version_info.major == 3 and sys.version_info.minor >= 9:
+    from collections.abc import Callable, Collection, Iterable, Sequence
+    List = list
+else:
+    from typing import Callable, Iterable, Sequence, Collection, List
 
 from sphinx.util import logging
 from sphinx.util.inspect import signature as Signature
 from sphinx.util.inspect import stringify_signature
 
 logger = logging.getLogger(__name__)
-pydata_annotations = {'Any', 'AnyStr', 'Callable', 'ClassVar', 'Literal', 'NoReturn', 'Optional',
-                      'Tuple', 'Union'}
+pydata_annotations = {'Any', 'AnyStr', 'Callable', 'ClassVar', 'Literal',
+                      'NoReturn', 'Optional', 'Tuple', 'Union'}
 
 
 def get_annotation_module(annotation) -> str:
@@ -187,6 +194,57 @@ def normalize_source_lines(sourcelines: str) -> str:
     # Put it together again
     aligned_prefix.append(fn_def)
     return "\n".join(aligned_prefix + aligned_suffix)
+
+
+def get_args(func: Callable, for_sphinx: bool = True) -> List[str]:
+    signature = Signature(func)
+    return ['{}\\_'.format(k[:-1]) if for_sphinx and k.endswith('_')
+            else k for k in signature.parameters]
+
+
+def search_field(lines: Iterable[AnyStr],
+                 searchfor: Union[Iterable[AnyStr], re.Pattern],
+                 ) -> Optional[int]:
+    for i, line in enumerate(lines):
+        if isinstance(searchfor, re.Pattern):
+            if searchfor.match(line):
+                return i
+        elif any(line.startswith(search) for search in searchfor):
+            return i
+
+    return None
+
+
+def find_next_arg(
+        lines: Collection[str], args: Sequence[str],
+        arg: str, template=r':\S+ {}:',
+        other_fields: Iterable[str] = (
+            'raises', 'raise', 'except', 'exception', 'var', 'ivar', 'cvar',
+            'vartype', 'returns', 'return', 'rtype', 'meta')) -> Optional[int]:
+    """Finds the next argument following ``arg`` before other fields."""
+
+    if arg not in args:
+        return None
+
+    nextarg_idx = args.index(arg) + 1
+
+    for nextarg in args[nextarg_idx:]:
+        index = search_field(lines, re.compile(template.format(nextarg)))
+        if index is not None:
+            return index
+
+    # Other fields might come before param field
+    prev_line_idx = 0
+    for prevarg in reversed(args[:nextarg_idx]):
+        index = search_field(lines, re.compile(template.format(prevarg)))
+        if index is not None:
+            prev_line_idx = index
+            break
+
+    index = search_field(
+        lines[prev_line_idx:], [':{}'.format(field) for field in other_fields])
+
+    return len(lines) if index is None else index + prev_line_idx
 
 
 def process_signature(app, what: str, name: str, obj, options, signature, return_annotation):
@@ -431,16 +489,15 @@ def process_docstring(app, what, name, obj, options, lines):
 
             searchfor = [':{} {}:'.format(field, argname)
                          for field in ('param', 'parameter', 'arg', 'argument')]
-            insert_index = None
-
-            for i, line in enumerate(lines):
-                if any(line.startswith(search_string) for search_string in searchfor):
-                    insert_index = i
-                    break
+            insert_index = search_field(lines, searchfor)
 
             if insert_index is None and app.config.always_document_param_types:
-                lines.append(':param {}:'.format(argname))
-                insert_index = len(lines)
+                insert_index = find_next_arg(lines, get_args(obj), argname)
+                lines.insert(insert_index, ':param {}:'.format(argname))
+                # Insert type before param, so insert_index is not incremented
+
+                # lines.append(':param {}:'.format(argname))
+                # insert_index = len(lines)
 
             if insert_index is not None:
                 lines.insert(
